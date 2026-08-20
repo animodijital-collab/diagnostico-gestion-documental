@@ -125,14 +125,60 @@ function finish(){
  document.getElementById("bar").style.width="100%";document.getElementById("progressText").textContent="Resultado";
  window.scrollTo({top:0,behavior:"smooth"});
 }
-async function sendResults(){
- const btn=document.getElementById("sendBtn");btn.disabled=true;btn.textContent="Enviando…";
- const data={timestamp:new Date().toISOString(),...Object.fromEntries(new FormData(document.getElementById("form"))),respuestas:responses,
- fortalezas:document.getElementById("fortalezas").value,debilidades:document.getElementById("debilidades").value,
- riesgos:document.getElementById("riesgos").value,recomendaciones:document.getElementById("recomendaciones").value};
- const endpoint="PEGA_AQUI_TU_URL_DE_GOOGLE_APPS_SCRIPT";
- if(endpoint.startsWith("PEGA_AQUI")){alert("La página está lista. Falta conectar el enlace de Google Sheets para guardar las respuestas.");btn.disabled=false;btn.textContent="Enviar diagnóstico";return}
- try{await fetch(endpoint,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(data)});alert("¡Diagnóstico enviado correctamente!");btn.textContent="Enviado ✓";}catch(e){alert("No se pudo enviar. Revisa la conexión.");btn.disabled=false;btn.textContent="Enviar diagnóstico";}
-}
+
+ async function sendResults(){
+  const btn=document.getElementById("sendBtn");
+  btn.disabled=true;
+  btn.textContent="Enviando…";
+
+  const data={
+    access_key:"a58788dff4fc479a970a18065ef19517",
+    subject:"Nuevo diagnóstico de gestión documental",
+    timestamp:new Date().toISOString(),
+
+    entidad:document.querySelector('[name="entidad"]').value,
+    dependencia:document.querySelector('[name="dependencia"]').value,
+    municipio:document.querySelector('[name="municipio"]').value,
+    fecha:document.querySelector('[name="fecha"]').value,
+    responsable:document.querySelector('[name="responsable"]').value,
+    cargo:document.querySelector('[name="cargo"]').value,
+
+    respuestas:responses,
+
+    fortalezas:document.getElementById("fortalezas").value,
+    debilidades:document.getElementById("debilidades").value,
+    riesgos:document.getElementById("riesgos").value,
+    recomendaciones:document.getElementById("recomendaciones").value
+  };
+
+  try{
+    const respuesta=await fetch(
+      "https://splitforms.com/api/submit",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify(data)
+      }
+    );
+
+    const resultado=await respuesta.json();
+
+    if(resultado.success){
+      alert("¡Diagnóstico enviado correctamente! ✓");
+      btn.textContent="Enviado ✓";
+    }else{
+      throw new Error(resultado.message||"Error al enviar");
+    }
+
+  }catch(error){
+    console.error(error);
+    alert("No se pudo enviar el diagnóstico. Inténtalo nuevamente.");
+    btn.disabled=false;
+    btn.textContent="Enviar diagnóstico";
+  }
+ }
+
 </script>
 </body></html>
