@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico de Gestión Documental</title>
+<style>
+:root{--bg:#071014;--panel:#0d1b20;--line:#1b6970;--cyan:#35f2df;--green:#63ff9b;--text:#ecffff;--muted:#9bb7ba;--danger:#ff6680;--yellow:#ffd76a}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 20% 0%,#10343a 0,#071014 42%,#04090b 100%);color:var(--text);font-family:Arial,sans-serif}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(#35f2df33 1px,transparent 1px);background-size:28px 28px;opacity:.25}
+.wrap{max-width:900px;margin:auto;padding:22px 14px 60px}.hero{padding:28px 20px;border:1px solid #35f2df55;border-radius:24px;background:#08171bd9;box-shadow:0 0 35px #35f2df18}
+.badge{display:inline-block;padding:7px 12px;border:1px solid var(--cyan);border-radius:99px;color:var(--cyan);font-size:12px;letter-spacing:1px}
+h1{font-size:clamp(28px,7vw,48px);margin:16px 0 8px;line-height:1.02} h2{margin-top:0} p{color:var(--muted);line-height:1.55}
+.progress{height:9px;background:#10272b;border-radius:20px;overflow:hidden;margin:20px 0 8px}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));transition:.35s}
+.card{display:none;margin-top:18px;padding:20px;border:1px solid #35f2df35;border-radius:20px;background:#09181cdd;animation:up .35s ease}.card.active{display:block}@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.field label{display:block;color:#c9e8e9;font-size:13px;margin-bottom:6px}
+input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid #2b5a60;background:#061014;color:white;outline:none}textarea{min-height:70px;resize:vertical}
+.q{padding:15px 0;border-top:1px solid #ffffff10}.q:first-child{border-top:0}.q strong{display:block;line-height:1.4;margin-bottom:10px}
+.options{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.options label{cursor:pointer;text-align:center;padding:11px 5px;border:1px solid #28565b;border-radius:12px;color:#cce8e8;font-size:13px;transition:.2s}.options label:hover{border-color:var(--cyan);box-shadow:0 0 12px #35f2df22}.options input{display:none}.options label:has(input:checked){border-color:var(--cyan);background:#0d3439;color:white;box-shadow:0 0 16px #35f2df20}
+.obs{margin-top:8px}.obs input{font-size:13px}.nav{display:flex;justify-content:space-between;gap:10px;margin-top:20px}button{border:0;border-radius:13px;padding:13px 18px;font-weight:bold;cursor:pointer}button.primary{background:var(--cyan);color:#031012}button.secondary{background:#163136;color:white}button:disabled{opacity:.4;cursor:not-allowed}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}.stat{padding:15px;border-radius:15px;background:#0b2529;border:1px solid #ffffff10;text-align:center}.stat b{font-size:25px;display:block}.excellent{color:var(--green)}.good{color:var(--cyan)}.acceptable{color:var(--yellow)}.critical{color:var(--danger)}
+@media(max-width:600px){.options{grid-template-columns:repeat(2,1fr)}.summary{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section class="hero">
+<span class="badge">DIAGNÓSTICO · GESTIÓN DOCUMENTAL</span>
+<h1>Lista de chequeo</h1>
+<p>Diagnóstico de gestión documental y digitalización. Responde cada criterio según la situación actual de la entidad.</p>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<small id="progressText">Datos generales</small>
+</section>
+
+<form id="form">
+<section class="card active" data-step="0">
+<h2>Datos generales</h2><p>Completa la información básica antes de iniciar.</p>
+<div class="grid">
+<div class="field"><label>Entidad</label><input name="entidad" required></div>
+<div class="field"><label>Dependencia</label><input name="dependencia"></div>
+<div class="field"><label>Municipio</label><input name="municipio"></div>
+<div class="field"><label>Fecha</label><input type="date" name="fecha"></div>
+<div class="field"><label>Responsable del diagnóstico</label><input name="responsable" required></div>
+<div class="field"><label>Cargo</label><input name="cargo"></div>
+</div>
+<div class="nav"><span></span><button type="button" class="primary" onclick="next()">Comenzar →</button></div>
+</section>
+<div id="sections"></div>
+</form>
+
+<section class="card" id="result">
+<h2>Diagnóstico completado ✓</h2><p id="status">Procesando resultados…</p>
+<div class="summary">
+<div class="stat"><b id="yes">0</b> Cumple</div><div class="stat"><b id="partial">0</b> Parcial</div>
+<div class="stat"><b id="no">0</b> No cumple</div><div class="stat"><b id="na">0</b> No aplica</div>
+</div>
+<div id="level"></div>
+<p><b>Fortalezas identificadas</b></p><textarea name="fortalezas" id="fortalezas"></textarea>
+<p><b>Debilidades identificadas</b></p><textarea name="debilidades" id="debilidades"></textarea>
+<p><b>Riesgos detectados</b></p><textarea name="riesgos" id="riesgos"></textarea>
+<p><b>Recomendaciones</b></p><textarea name="recomendaciones" id="recomendaciones"></textarea>
+<div class="nav"><button class="secondary" onclick="location.reload()">Nueva respuesta</button><button class="primary" id="sendBtn" onclick="sendResults()">Enviar diagnóstico</button></div>
+</section>
+</div>
+
+<script>
+const sections=[
+["I. ORGANIZACIÓN DOCUMENTAL",[
+"Existe Archivo de Gestión organizado.","Existe Archivo Central.","Existe Archivo Histórico (si aplica).","Los expedientes están correctamente conformados.","Los documentos están clasificados por series documentales.","Los documentos están ordenados cronológicamente.","Los expedientes se encuentran foliados correctamente.","Los expedientes están identificados y rotulados.","No existen documentos acumulados sin organizar.","No existen documentos duplicados innecesarios."]],
+["II. TABLAS DE RETENCIÓN DOCUMENTAL (TRD)",[
+"La entidad cuenta con TRD aprobadas.","Las TRD están actualizadas.","Las dependencias aplican las TRD.","Se respetan los tiempos de retención.","Se ejecuta correctamente la disposición final."]],
+["III. INSTRUMENTOS ARCHIVÍSTICOS",[
+"Existe Programa de Gestión Documental (PGD).","Existe PINAR.","Existe Cuadro de Clasificación Documental.","Se cuenta con Inventario Documental actualizado.","Existe Banco Terminológico (cuando aplique)."]],
+["IV. CONSERVACIÓN DOCUMENTAL",[
+"La documentación se encuentra limpia.","No existe humedad.","No existen plagas.","Existe ventilación adecuada.","Existe iluminación adecuada.","Los documentos están almacenados en cajas archivísticas apropiadas.","Existe mobiliario archivístico adecuado.","Los documentos están protegidos contra incendios e inundaciones."]],
+["V. INFRAESTRUCTURA",[
+"Existe espacio suficiente para el archivo.","Los archivos cuentan con acceso restringido.","Existe señalización del archivo.","Existe control ambiental.","Las estanterías cumplen condiciones técnicas."]],
+["VI. DIGITALIZACIÓN DOCUMENTAL",[
+"Existe procedimiento de digitalización.","Los documentos se digitalizan siguiendo procedimientos establecidos.","Se verifica la calidad de las imágenes digitalizadas.","Los archivos digitales tienen nomenclatura estandarizada.","Los documentos digitales cuentan con respaldo.","Se controla el acceso a documentos digitales.","Existe software de gestión documental.","Se gestionan documentos electrónicos de archivo."]],
+["VII. TALENTO HUMANO",[
+"Existe responsable de gestión documental.","El personal conoce la Ley General de Archivos.","El personal ha recibido capacitación archivística.","Se realizan capacitaciones periódicas."]],
+["VIII. ATENCIÓN AL CIUDADANO",[
+"Los documentos se localizan rápidamente.","Se cumplen los tiempos de respuesta.","Existe control de préstamos documentales.","Se garantiza el acceso a la información pública conforme a la normativa vigente."]],
+["IX. SEGURIDAD DE LA INFORMACIÓN",[
+"Se realizan copias de seguridad de la información digital.","Existen controles de acceso físico al archivo.","Existen controles de acceso lógico a la información digital.","Se dispone de un plan de recuperación ante desastres para la información."]]
+];
+let current=0, total=sections.length, responses={};
+const root=document.getElementById("sections");
+sections.forEach((s,si)=>{
+ const sec=document.createElement("section"); sec.className="card"; sec.dataset.step=si+1;
+ sec.innerHTML=`<h2>${s[0]}</h2><p>Selecciona una opción para cada criterio.</p>`;
+ s[1].forEach((q,qi)=>{
+  const id=`q${si}_${qi}`; const div=document.createElement("div"); div.className="q";
+  div.innerHTML=`<strong>${si*0+([1,2,3,4,5,6,7,8,9][si])}.${qi+1} · ${q}</strong>
+  <div class="options">
+  ${["Sí","Parcial","No","N/A"].map(v=>`<label><input type="radio" name="${id}" value="${v}" onchange="responses['${id}']=this.value">${v}</label>`).join("")}
+  </div><div class="obs"><input placeholder="Observación (opcional)" name="${id}_obs"></div>`;
+  sec.appendChild(div);
+ }); 
+ const nav=document.createElement("div"); nav.className="nav";
+ nav.innerHTML=`<button type="button" class="secondary" onclick="prev()">← Anterior</button><button type="button" class="primary" onclick="next()">${si===total-1?"Ver resultado":"Siguiente →"}</button>`;
+ sec.appendChild(nav); root.appendChild(sec);
+});
+function show(){
+ document.querySelectorAll(".card[data-step]").forEach(x=>x.classList.remove("active"));
+ const target=document.querySelector(`.card[data-step="${current}"]`);
+ if(target) target.classList.add("active");
+ document.getElementById("bar").style.width=(current/(total+1)*100)+"%";
+ document.getElementById("progressText").textContent=current===0?"Datos generales":`Sección ${current} de ${total}`;
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function next(){
+ if(current===0 && !document.getElementById("form").reportValidity()) return;
+ if(current<total){current++;show();} else finish();
+}
+function prev(){if(current>0){current--;show();}}
+function finish(){
+ const vals=Object.values(responses), yes=vals.filter(x=>x==="Sí").length, partial=vals.filter(x=>x==="Parcial").length, no=vals.filter(x=>x==="No").length, na=vals.filter(x=>x==="N/A").length;
+ const applicable=yes+partial+no, pct=applicable?yes/applicable*100:0;
+ document.querySelectorAll(".card").forEach(x=>x.classList.remove("active")); document.getElementById("result").classList.add("active");
+ document.getElementById("yes").textContent=yes;document.getElementById("partial").textContent=partial;document.getElementById("no").textContent=no;document.getElementById("na").textContent=na;
+ let label,cls;if(pct>=90){label="Excelente";cls="excellent"}else if(pct>=75){label="Bueno, requiere mejoras puntuales.";cls="good"}else if(pct>=60){label="Aceptable, necesita plan de mejoramiento.";cls="acceptable"}else{label="Crítico, se recomienda formular e implementar un proyecto integral de organización documental y digitalización con acciones prioritarias.";cls="critical"}
+ document.getElementById("level").innerHTML=`<h3 class="${cls}">${pct.toFixed(1)} % · ${label}</h3><p>El porcentaje se calcula sobre los criterios aplicables (Sí + Parcial + No), excluyendo N/A.</p>`;
+ document.getElementById("status").textContent="Revisa el resultado y completa las conclusiones del diagnóstico.";
+ document.getElementById("bar").style.width="100%";document.getElementById("progressText").textContent="Resultado";
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+async function sendResults(){
+ const btn=document.getElementById("sendBtn");btn.disabled=true;btn.textContent="Enviando…";
+ const data={timestamp:new Date().toISOString(),...Object.fromEntries(new FormData(document.getElementById("form"))),respuestas:responses,
+ fortalezas:document.getElementById("fortalezas").value,debilidades:document.getElementById("debilidades").value,
+ riesgos:document.getElementById("riesgos").value,recomendaciones:document.getElementById("recomendaciones").value};
+ const endpoint="PEGA_AQUI_TU_URL_DE_GOOGLE_APPS_SCRIPT";
+ if(endpoint.startsWith("PEGA_AQUI")){alert("La página está lista. Falta conectar el enlace de Google Sheets para guardar las respuestas.");btn.disabled=false;btn.textContent="Enviar diagnóstico";return}
+ try{await fetch(endpoint,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(data)});alert("¡Diagnóstico enviado correctamente!");btn.textContent="Enviado ✓";}catch(e){alert("No se pudo enviar. Revisa la conexión.");btn.disabled=false;btn.textContent="Enviar diagnóstico";}
+}
+</script>
+</body></html>
